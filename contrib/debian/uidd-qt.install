@@ -1,0 +1,6 @@
+usr/local/bin/uidd-qt usr/bin
+share/pixmaps/uidd32.xpm usr/share/pixmaps
+share/pixmaps/uidd16.xpm usr/share/pixmaps
+share/pixmaps/uidd128.png usr/share/pixmaps
+debian/uidd-qt.desktop usr/share/applications
+debian/uidd-qt.protocol usr/share/kde4/services/
