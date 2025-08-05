@@ -1,19 +1,20 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2018 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
-#include "config/bitcoin-config.h"
+#include <config/bitcoin-config.h>
 #endif
 
-#include "askpassphrasedialog.h"
-#include "ui_askpassphrasedialog.h"
+#include <qt/askpassphrasedialog.h>
+#include <qt/forms/ui_askpassphrasedialog.h>
 
-#include "guiconstants.h"
-#include "walletmodel.h"
-#include "wallet/wallet.h"
+#include <qt/guiconstants.h>
+#include <qt/walletmodel.h>
+#include <qt/styleSheet.h>
+#include <wallet/wallet.h>
 
-#include "support/allocators/secure.h"
+#include <support/allocators/secure.h>
 
 #include <QKeyEvent>
 #include <QMessageBox>
@@ -23,10 +24,13 @@ AskPassphraseDialog::AskPassphraseDialog(Mode _mode, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::AskPassphraseDialog),
     mode(_mode),
-    model(0),
+    model(nullptr),
     fCapsLock(false)
 {
     ui->setupUi(this);
+
+    SetObjectStyleSheet(ui->buttonBox->button(QDialogButtonBox::Cancel), StyleSheetNames::ButtonLight);
+    SetObjectStyleSheet(ui->buttonBox->button(QDialogButtonBox::Ok), StyleSheetNames::ButtonGray);
 
     ui->passEdit1->setMinimumSize(ui->passEdit1->sizeHint());
     ui->passEdit2->setMinimumSize(ui->passEdit2->sizeHint());
@@ -41,7 +45,6 @@ AskPassphraseDialog::AskPassphraseDialog(Mode _mode, QWidget *parent) :
     ui->passEdit2->installEventFilter(this);
     ui->passEdit3->installEventFilter(this);
 
-    ui->stakingCheckBox->setChecked(fWalletUnlockStakingOnly);
     ui->stakingCheckBox->hide();
 
     switch(mode)
@@ -77,9 +80,10 @@ AskPassphraseDialog::AskPassphraseDialog(Mode _mode, QWidget *parent) :
             break;
     }
     textChanged();
-    connect(ui->passEdit1, SIGNAL(textChanged(QString)), this, SLOT(textChanged()));
-    connect(ui->passEdit2, SIGNAL(textChanged(QString)), this, SLOT(textChanged()));
-    connect(ui->passEdit3, SIGNAL(textChanged(QString)), this, SLOT(textChanged()));
+    connect(ui->toggleShowPasswordButton, &QPushButton::toggled, this, &AskPassphraseDialog::toggleShowPassword);
+    connect(ui->passEdit1, &QLineEdit::textChanged, this, &AskPassphraseDialog::textChanged);
+    connect(ui->passEdit2, &QLineEdit::textChanged, this, &AskPassphraseDialog::textChanged);
+    connect(ui->passEdit3, &QLineEdit::textChanged, this, &AskPassphraseDialog::textChanged);
 }
 
 AskPassphraseDialog::~AskPassphraseDialog()
@@ -91,6 +95,7 @@ AskPassphraseDialog::~AskPassphraseDialog()
 void AskPassphraseDialog::setModel(WalletModel *_model)
 {
     this->model = _model;
+    if(model) ui->stakingCheckBox->setChecked(model->getWalletUnlockStakingOnly() || mode == UnlockStaking);
 }
 
 void AskPassphraseDialog::accept()
@@ -129,7 +134,7 @@ void AskPassphraseDialog::accept()
                 {
                     QMessageBox::warning(this, tr("Wallet encrypted"),
                                          "<qt>" +
-                                         tr("%1 will close now to finish the encryption process. "
+                                         tr("Your wallet is now encrypted. "
                                          "Remember that encrypting your wallet cannot fully protect "
                                          "your uidds from being stolen by malware infecting your computer.").arg(tr(PACKAGE_NAME)) +
                                          "<br><br><b>" +
@@ -138,7 +143,6 @@ void AskPassphraseDialog::accept()
                                          "For security reasons, previous backups of the unencrypted wallet file "
                                          "will become useless as soon as you start using the new, encrypted wallet.") +
                                          "</b></qt>");
-                    QApplication::quit();
                 }
                 else
                 {
@@ -160,15 +164,16 @@ void AskPassphraseDialog::accept()
         } break;
     case UnlockStaking:
     case Unlock:
-        if(!model->setWalletLocked(false, oldpass))
-        {
-            QMessageBox::critical(this, tr("Wallet unlock failed"),
-                                  tr("The passphrase entered for the wallet decryption was incorrect."));
-        }
-        else
-        {
-            fWalletUnlockStakingOnly = ui->stakingCheckBox->isChecked();
-            QDialog::accept(); // Success
+        try {
+            if (!model->setWalletLocked(false, oldpass)) {
+                QMessageBox::critical(this, tr("Wallet unlock failed"),
+                                      tr("The passphrase entered for the wallet decryption was incorrect."));
+            } else {
+                model->setWalletUnlockStakingOnly(ui->stakingCheckBox->isChecked());
+                QDialog::accept(); // Success
+            }
+        } catch (const std::runtime_error& e) {
+            QMessageBox::critical(this, tr("Wallet unlock failed"), e.what());
         }
         break;
     case Decrypt:
@@ -242,6 +247,15 @@ bool AskPassphraseDialog::event(QEvent *event)
         }
     }
     return QWidget::event(event);
+}
+
+void AskPassphraseDialog::toggleShowPassword(bool show)
+{
+    ui->toggleShowPasswordButton->setDown(show);
+    const auto mode = show ? QLineEdit::Normal : QLineEdit::Password;
+    ui->passEdit1->setEchoMode(mode);
+    ui->passEdit2->setEchoMode(mode);
+    ui->passEdit3->setEchoMode(mode);
 }
 
 bool AskPassphraseDialog::eventFilter(QObject *object, QEvent *event)

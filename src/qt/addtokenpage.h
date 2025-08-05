@@ -1,7 +1,7 @@
 #ifndef ADDTOKENPAGE_H
 #define ADDTOKENPAGE_H
 
-#include <QWidget>
+#include <QDialog>
 class Token;
 class WalletModel;
 class ClientModel;
@@ -10,7 +10,7 @@ namespace Ui {
 class AddTokenPage;
 }
 
-class AddTokenPage : public QWidget
+class AddTokenPage : public QDialog
 {
     Q_OBJECT
 
@@ -25,7 +25,6 @@ private Q_SLOTS:
     void on_clearButton_clicked();
     void on_confirmButton_clicked();
     void on_addressChanged();
-    void on_numBlocksChanged();
     void on_updateConfirmButton();
     void on_zeroBalanceAddressToken(bool enable);
 

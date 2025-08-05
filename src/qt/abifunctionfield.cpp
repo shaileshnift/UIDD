@@ -1,11 +1,12 @@
-#include "abifunctionfield.h"
-#include "abiparamsfield.h"
-#include "contractabi.h"
-#include "platformstyle.h"
+#include <qt/abifunctionfield.h>
+#include <qt/abiparamsfield.h>
+#include <qt/contractabi.h>
+#include <qt/platformstyle.h>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QStringListModel>
+#include <QPainter>
 
 #include <iostream>
 ABIFunctionField::ABIFunctionField(const PlatformStyle *platformStyle, FunctionType type, QWidget *parent) :
@@ -23,7 +24,7 @@ ABIFunctionField::ABIFunctionField(const PlatformStyle *platformStyle, FunctionT
     mainLayout->setSpacing(10);
     mainLayout->setContentsMargins(0, 0, 0, 0);
 
-    QHBoxLayout *topLayout = new QHBoxLayout(this);
+    QHBoxLayout *topLayout = new QHBoxLayout(m_func);
     topLayout->setSpacing(10);
     topLayout->setContentsMargins(0, 0, 0, 0);
 
@@ -107,6 +108,14 @@ void ABIFunctionField::clear()
         m_paramsField->removeWidget(widget);
         widget->deleteLater();
     }
+}
+
+void ABIFunctionField::paintEvent(QPaintEvent *)
+{
+    QStyleOption opt;
+    opt.init(this);
+    QPainter p(this);
+    style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
 }
 
 void ABIFunctionField::setContractABI(ContractABI *contractABI)

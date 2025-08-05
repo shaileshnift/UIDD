@@ -6,7 +6,7 @@
 #include <QComboBox>
 #include <QLabel>
 #include <QVector>
-#include "contractabi.h"
+#include <qt/contractabi.h>
 
 class PlatformStyle;
 class ABIParamsField;
@@ -97,6 +97,10 @@ private:
     QVector<int> m_abiFunctionList;
     FunctionType m_functionType;
     const PlatformStyle *m_platformStyle;
+
+    // QWidget interface
+protected:
+    void paintEvent(QPaintEvent *);
 };
 
 #endif // ABIFUNCTIONFIELD_H

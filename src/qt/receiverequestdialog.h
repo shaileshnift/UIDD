@@ -1,18 +1,19 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2018 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef BITCOIN_QT_RECEIVEREQUESTDIALOG_H
 #define BITCOIN_QT_RECEIVEREQUESTDIALOG_H
 
-#include "walletmodel.h"
+#include <qt/walletmodel.h>
 
 #include <QDialog>
 #include <QImage>
 #include <QLabel>
 #include <QPainter>
 
-class OptionsModel;
+class PlatformStyle;
+class ReceiveCoinsDialog;
 
 namespace Ui {
     class ReceiveRequestDialog;
@@ -30,7 +31,7 @@ class QRImageWidget : public QLabel
     Q_OBJECT
 
 public:
-    explicit QRImageWidget(QWidget *parent = 0);
+    explicit QRImageWidget(QWidget *parent = nullptr);
     QImage exportImage();
 
 public Q_SLOTS:
@@ -50,23 +51,37 @@ class ReceiveRequestDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit ReceiveRequestDialog(QWidget *parent = 0);
+    explicit ReceiveRequestDialog(const PlatformStyle *platformStyle, QWidget *parent = nullptr);
     ~ReceiveRequestDialog();
 
-    void setModel(OptionsModel *model);
+    void setModel(WalletModel *model);
     void setInfo(const SendCoinsRecipient &info);
-    static bool createQRCode(QLabel * label, SendCoinsRecipient info);
+    static bool createQRCode(QLabel * label, SendCoinsRecipient info, bool showAddress = false);
+
+public Q_SLOTS:
+    void clear();
+    void reject();
+    void accept();
 
 private Q_SLOTS:
     void on_btnCopyURI_clicked();
     void on_btnCopyAddress_clicked();
+    void on_btnRefreshAddress_clicked();
+    void on_btnRequestPayment_clicked();
+    void on_btnClear_clicked();
 
     void update();
 
 private:
+    bool refreshAddress();
+    bool getDefaultAddress();
+
+private:
     Ui::ReceiveRequestDialog *ui;
-    OptionsModel *model;
+    WalletModel *model;
     SendCoinsRecipient info;
+    const PlatformStyle *platformStyle;
+    ReceiveCoinsDialog* requestPaymentDialog;
 };
 
 #endif // BITCOIN_QT_RECEIVEREQUESTDIALOG_H

@@ -1,16 +1,20 @@
-#include "receivetokenpage.h"
-#include "ui_receivetokenpage.h"
+#include <qt/receivetokenpage.h>
+#include <qt/forms/ui_receivetokenpage.h>
 
-#include "guiutil.h"
-#include "guiconstants.h"
-#include "receiverequestdialog.h"
+#include <qt/guiutil.h>
+#include <qt/guiconstants.h>
+#include <qt/receiverequestdialog.h>
+#include <qt/platformstyle.h>
 
-ReceiveTokenPage::ReceiveTokenPage(QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::ReceiveTokenPage)
+ReceiveTokenPage::ReceiveTokenPage(const PlatformStyle *_platformStyle, QWidget *parent) :
+    QDialog(parent),
+    ui(new Ui::ReceiveTokenPage),
+    platformStyle(_platformStyle)
 {
     ui->setupUi(this);
-    connect(ui->copyAddressButton, SIGNAL(clicked()), this, SLOT(on_copyAddressClicked()));
+    connect(ui->copyAddressButton, &QToolButton::clicked, this, &ReceiveTokenPage::on_copyAddressClicked);
+    ui->copyAddressButton->setVisible(false);
+    setAddress("");
 }
 
 ReceiveTokenPage::~ReceiveTokenPage()
@@ -22,6 +26,13 @@ void ReceiveTokenPage::setAddress(QString address)
 {
     m_address = address;
     createQRCode();
+}
+
+void ReceiveTokenPage::setSymbol(QString symbol)
+{
+    QString addressText = symbol.isEmpty() ? "" : (QString("%1 %2:").arg(symbol, tr("Address")));
+    ui->labelTokenAddressText->setText(addressText);
+    setWindowTitle(QString("%1 %2").arg(symbol, tr("Receive")));
 }
 
 void ReceiveTokenPage::on_copyAddressClicked()
@@ -38,11 +49,21 @@ void ReceiveTokenPage::createQRCode()
         info.address = m_address;
         if(ReceiveRequestDialog::createQRCode(ui->lblQRCode, info))
         {
+            ui->widgetQRMargin->setVisible(true);
             ui->lblQRCode->setScaledContents(true);
         }
+        else
+        {
+            ui->widgetQRMargin->setVisible(false);
+        }
+        ui->labelTokenAddress->setText(m_address);
+        ui->copyAddressButton->setVisible(true);
     }
     else
     {
         ui->lblQRCode->clear();
+        ui->labelTokenAddress->setText("");
+        ui->labelTokenAddressText->setText("");
+        ui->copyAddressButton->setVisible(false);
     }
 }

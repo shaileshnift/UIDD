@@ -1,8 +1,8 @@
-#include "abiparamsfield.h"
-#include "abiparam.h"
-#include "platformstyle.h"
+#include <qt/abiparamsfield.h>
+#include <qt/abiparam.h>
+#include <qt/platformstyle.h>
 
-#include "QStringList"
+#include <QStringList>
 
 ABIParamsField::ABIParamsField(const PlatformStyle *platformStyle, QWidget *parent) :
     QWidget(parent),
@@ -10,7 +10,7 @@ ABIParamsField::ABIParamsField(const PlatformStyle *platformStyle, QWidget *pare
 {
     m_platfromStyle = platformStyle;
     m_mainLayout->setSpacing(10);
-    m_mainLayout->setContentsMargins(0,0,30,0);
+    m_mainLayout->setContentsMargins(0,0,0,0);
     this->setLayout(m_mainLayout);
 }
 

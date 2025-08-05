@@ -1,16 +1,14 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2018 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef BITCOIN_PRIMITIVES_BLOCK_H
 #define BITCOIN_PRIMITIVES_BLOCK_H
 
-#include "primitives/transaction.h"
-#include "serialize.h"
-#include "uint256.h"
-
-static const int SER_WITHOUT_SIGNATURE = 1 << 3;
+#include <primitives/transaction.h>
+#include <serialize.h>
+#include <uint256.h>
 
 /** Nodes collect new transactions into a block, hash them into a hash tree,
  * and scan through nonce values to make the block's hash satisfy proof-of-work
@@ -19,10 +17,13 @@ static const int SER_WITHOUT_SIGNATURE = 1 << 3;
  * in the block is a special one that creates a new coin owned by the creator
  * of the block.
  */
-class CBlockHeader
+
+// Base class for block header, used to serialize the header without signature
+// Workaround due to removing serialization templates in Bitcoin Core 0.18
+class CBlockHeaderBase
 {
 public:
-    // header
+    // header without signature
     int32_t nVersion;
     uint256 hashPrevBlock;
     uint256 hashMerkleRoot;
@@ -33,7 +34,29 @@ public:
     uint256 hashUTXORoot; // uidd
     // proof-of-stake specific fields
     COutPoint prevoutStake;
+
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action) {
+        READWRITE(this->nVersion);
+        READWRITE(hashPrevBlock);
+        READWRITE(hashMerkleRoot);
+        READWRITE(nTime);
+        READWRITE(nBits);
+        READWRITE(nNonce);
+        READWRITE(hashStateRoot); // uidd
+        READWRITE(hashUTXORoot); // uidd
+        READWRITE(prevoutStake);
+    }
+};
+
+class CBlockHeader : public CBlockHeaderBase
+{
+public:
+    // header
     std::vector<unsigned char> vchBlockSig;
+
     CBlockHeader()
     {
         SetNull();
@@ -52,8 +75,7 @@ public:
         READWRITE(hashStateRoot); // uidd
         READWRITE(hashUTXORoot); // uidd
         READWRITE(prevoutStake);
-        if (!(s.GetType() & SER_WITHOUT_SIGNATURE))
-            READWRITE(vchBlockSig);
+        READWRITE(vchBlockSig);
     }
 
     void SetNull()
@@ -142,14 +164,14 @@ public:
     CBlock(const CBlockHeader &header)
     {
         SetNull();
-        *((CBlockHeader*)this) = header;
+        *(static_cast<CBlockHeader*>(this)) = header;
     }
 
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action) {
-        READWRITE(*(CBlockHeader*)this);
+        READWRITEAS(CBlockHeader, *this);
         READWRITE(vtx);
     }
 
@@ -194,10 +216,7 @@ struct CBlockLocator
 
     CBlockLocator() {}
 
-    CBlockLocator(const std::vector<uint256>& vHaveIn)
-    {
-        vHave = vHaveIn;
-    }
+    explicit CBlockLocator(const std::vector<uint256>& vHaveIn) : vHave(vHaveIn) {}
 
     ADD_SERIALIZE_METHODS;
 
@@ -219,8 +238,5 @@ struct CBlockLocator
         return vHave.empty();
     }
 };
-
-/** Compute the consensus-critical block weight (see BIP 141). */
-int64_t GetBlockWeight(const CBlock& tx);
 
 #endif // BITCOIN_PRIMITIVES_BLOCK_H

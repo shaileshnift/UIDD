@@ -1,7 +1,7 @@
-#include "abiparam.h"
-#include "contractabi.h"
-#include "abiparamitem.h"
-#include "platformstyle.h"
+#include <qt/abiparam.h>
+#include <qt/contractabi.h>
+#include <qt/abiparamitem.h>
+#include <qt/platformstyle.h>
 
 #include <QHBoxLayout>
 #include <QRegularExpressionValidator>
@@ -19,7 +19,7 @@ ABIParam::ABIParam(const PlatformStyle *platformStyle, int ID, const ParameterAB
 {
     m_paramName = new QLabel(this);
     m_mainLayout = new QHBoxLayout(this);
-    m_paramItemsLayout = new QVBoxLayout(this);
+    m_paramItemsLayout = new QVBoxLayout();
     m_vSpacer = new QSpacerItem(0, 0, QSizePolicy::Fixed, QSizePolicy::Fixed);
     m_hSpacer = new QSpacerItem(0, 0, QSizePolicy::Fixed, QSizePolicy::Fixed);
 
@@ -35,11 +35,11 @@ ABIParam::ABIParam(const PlatformStyle *platformStyle, int ID, const ParameterAB
 
     QFontMetrics metrix(m_paramName->font());
     int width = m_paramName->width() + 10;
-    QString text(QString("%2 <b>%1").arg(QString::fromStdString(param.name)).arg(QString::fromStdString(param.type)));
+    QString text(QString("%2 %1").arg(QString::fromStdString(param.name)).arg(QString::fromStdString(param.type)));
     QString clippedText = metrix.elidedText(text, Qt::ElideRight, width);
     m_paramName->setText(clippedText);
 
-    QVBoxLayout *vLayout = new QVBoxLayout(this);
+    QVBoxLayout *vLayout = new QVBoxLayout();
     vLayout->addWidget(m_paramName);
     vLayout->addSpacerItem(m_vSpacer);
     m_mainLayout->addLayout(vLayout);

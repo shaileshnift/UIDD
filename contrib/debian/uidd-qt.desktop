@@ -1,10 +1,12 @@
 [Desktop Entry]
-Encoding=UTF-8
-Name=Bitcoin Core
+Version=0.17.6
+Name=Uidd Core
 Comment=Connect to the Uidd P2P Network
 Exec=uidd-qt %u
 Terminal=false
 Type=Application
 Icon=uidd128
 MimeType=x-scheme-handler/uidd;
-Categories=Office;Finance;
+Categories=Network;
+StartupWMClass=Uidd-qt
+Name[en_US]=uidd-qt

@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -31,14 +31,14 @@ class WalletFrame : public QFrame
     Q_OBJECT
 
 public:
-    explicit WalletFrame(const PlatformStyle *platformStyle, BitcoinGUI *_gui = 0);
+    explicit WalletFrame(const PlatformStyle *platformStyle, BitcoinGUI *_gui = nullptr);
     ~WalletFrame();
 
     void setClientModel(ClientModel *clientModel);
 
-    bool addWallet(const QString& name, WalletModel *walletModel);
-    bool setCurrentWallet(const QString& name);
-    bool removeWallet(const QString &name);
+    bool addWallet(WalletModel *walletModel);
+    bool setCurrentWallet(WalletModel* wallet_model);
+    bool removeWallet(WalletModel* wallet_model);
     void removeAllWallets();
 
     bool handlePaymentRequest(const SendCoinsRecipient& recipient);
@@ -53,13 +53,16 @@ private:
     QStackedWidget *walletStack;
     BitcoinGUI *gui;
     ClientModel *clientModel;
-    QMap<QString, WalletView*> mapWalletViews;
+    QMap<WalletModel*, WalletView*> mapWalletViews;
 
     bool bOutOfSync;
 
     const PlatformStyle *platformStyle;
 
-    WalletView *currentWalletView();
+public:
+    WalletView* currentWalletView() const;
+    WalletModel* currentWalletModel() const;
+    void updateTabBar(WalletView* walletView = 0, int index = -1);
 
 public Q_SLOTS:
     /** Switch to overview (home) page */
@@ -76,8 +79,10 @@ public Q_SLOTS:
     void gotoSendToContractPage();
     /** Switch to call contract page */
     void gotoCallContractPage();
-    /** Switch to QRCToken page */
-    void gotoQRCTokenPage(bool toAddTokenPage);
+    /** Switch to token page */
+    void gotoTokenPage();
+    /** Switch to stake page */
+    void gotoStakePage();
 
     /** Show Sign/Verify Message dialog and switch to sign message tab */
     void gotoSignMessageTab(QString addr = "");
@@ -88,12 +93,15 @@ public Q_SLOTS:
     void encryptWallet(bool status);
     /** Backup the wallet */
     void backupWallet();
+    /** Restore the wallet */
+    void restoreWallet();
     /** Change encrypted wallet passphrase */
     void changePassphrase();
     /** Ask for passphrase to unlock wallet temporarily */
     void unlockWallet();
     /** Lock the wallet */
     void lockWallet();
+
     /** Show used sending addresses */
     void usedSendingAddresses();
     /** Show used receiving addresses */

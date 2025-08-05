@@ -1,19 +1,19 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2018 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "qvalidatedlineedit.h"
+#include <qt/qvalidatedlineedit.h>
 
-#include "bitcoinaddressvalidator.h"
-#include "guiconstants.h"
+#include <qt/bitcoinaddressvalidator.h>
+#include <qt/styleSheet.h>
 
 QValidatedLineEdit::QValidatedLineEdit(QWidget *parent) :
     QLineEdit(parent),
     valid(true),
-    checkValidator(0),
+    checkValidator(nullptr),
     emptyIsValid(true)
 {
-    connect(this, SIGNAL(textChanged(QString)), this, SLOT(markValid()));
+    connect(this, &QValidatedLineEdit::textChanged, this, &QValidatedLineEdit::markValid);
 }
 
 void QValidatedLineEdit::setValid(bool _valid)
@@ -25,11 +25,27 @@ void QValidatedLineEdit::setValid(bool _valid)
 
     if(_valid)
     {
-        setStyleSheet("");
+        QWidget *widget = this->parentWidget();
+        if(widget && widget->inherits("QComboBox"))
+        {
+            widget->setStyleSheet("");
+        }
+        else
+        {
+            setStyleSheet("");
+        }
     }
     else
     {
-        setStyleSheet(STYLE_INVALID);
+        QWidget *widget = this->parentWidget();
+        if(widget && widget->inherits("QComboBox"))
+        {
+            SetObjectStyleSheet(widget, StyleSheetNames::Invalid);
+        }
+        else
+        {
+            SetObjectStyleSheet(this, StyleSheetNames::Invalid);
+        }
     }
     this->valid = _valid;
 }

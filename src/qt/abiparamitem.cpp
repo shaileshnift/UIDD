@@ -1,6 +1,6 @@
-#include "abiparamitem.h"
-#include "contractabi.h"
-#include "platformstyle.h"
+#include <qt/abiparamitem.h>
+#include <qt/contractabi.h>
+#include <qt/platformstyle.h>
 
 #include <QHBoxLayout>
 #include <QRegularExpressionValidator>
@@ -16,11 +16,14 @@ ABIParamItem::ABIParamItem(const PlatformStyle *platformStyle, const ParameterAB
     mainLayout->setSpacing(2);
     mainLayout->setContentsMargins(0,0,0,0);
 
-    m_buttonAdd->setIcon(platformStyle->SingleColorIcon(":/icons/add"));
-    m_buttonRemove->setIcon(platformStyle->SingleColorIcon(":/icons/remove"));
+    m_buttonAdd->setIcon(platformStyle->MultiStatesIcon(":/icons/add", PlatformStyle::PushButton));
+    m_buttonRemove->setIcon(platformStyle->MultiStatesIcon(":/icons/remove", PlatformStyle::PushButton));
 
-    m_buttonAdd->setFixedSize(27,27);
-    m_buttonRemove->setFixedSize(27,27);
+    m_buttonAdd->setFixedSize(30,30);
+    m_buttonRemove->setFixedSize(30,30);
+
+    m_buttonAdd->setFocusPolicy(Qt::NoFocus);
+    m_buttonRemove->setFocusPolicy(Qt::NoFocus);
 
     QRegularExpression regEx;
     if(ParameterABI::getRegularExpession(param.decodeType(), regEx))

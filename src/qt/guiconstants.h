@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2018 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -6,7 +6,7 @@
 #define BITCOIN_QT_GUICONSTANTS_H
 
 /* Milliseconds between model updates */
-static const int MODEL_UPDATE_DELAY = 250;
+static const int MODEL_UPDATE_DELAY = 2000;
 
 /* AskPassphraseDialog -- Maximum passphrase length */
 static const int MAX_PASSPHRASE_SIZE = 1024;
@@ -16,31 +16,15 @@ static const int STATUSBAR_ICONSIZE = 16;
 
 static const bool DEFAULT_SPLASHSCREEN = true;
 
-/* Invalid field background style */
-#define STYLE_INVALID "background:#FF8080"
-#define STYLE_INVALID_TEXTEDIT ".QValidatedTextEdit { background:#FF8080 }"
-/* Group box style */
-#define STYLE_GROUPBOX ".QGroupBox { border: 1px solid #c4c1bd;"\
-                       "margin-top: 15px;}"\
-                       "QGroupBox::title {"\
-                       "subcontrol-position: top left;"\
-                       "left: 10px;"\
-                       "padding: -20px 3px 0px 3px;}"
-/* Bottom-bordered line edit style */
-#define STYLE_UNDERLINE ".QLineEdit { border-top: none;"\
-                        "border-right: none;"\
-                        "border-bottom: 2px solid #c4c1bd;"\
-                        "background-color: transparent;}"
+
 /* Transaction list -- unconfirmed transaction */
 #define COLOR_UNCONFIRMED QColor(128, 128, 128)
 /* Transaction list -- negative amount */
-#define COLOR_NEGATIVE QColor(255, 0, 0)
+#define COLOR_NEGATIVE QColor(255, 255, 255)
 /* Transaction list -- bare address (without label) */
 #define COLOR_BAREADDRESS QColor(140, 140, 140)
 /* Transaction list -- TX status decoration - open until date */
 #define COLOR_TX_STATUS_OPENUNTILDATE QColor(64, 64, 255)
-/* Transaction list -- TX status decoration - offline */
-#define COLOR_TX_STATUS_OFFLINE QColor(192, 192, 192)
 /* Transaction list -- TX status decoration - danger, tx needs attention */
 #define COLOR_TX_STATUS_DANGER QColor(200, 100, 100)
 /* Transaction list -- TX status decoration - default color */
@@ -67,5 +51,15 @@ static const int MAX_URI_LENGTH = 255;
 #define QAPP_ORG_DOMAIN "uidd.org"
 #define QAPP_APP_NAME_DEFAULT "Uidd-Qt"
 #define QAPP_APP_NAME_TESTNET "Uidd-Qt-testnet"
+#define QAPP_APP_NAME_REGTEST "Uidd-Qt-regtest"
+
+/* One gigabyte (GB) in bytes */
+static constexpr uint64_t GB_BYTES{1000000000};
+
+/* Mainnet uidd explorer uri */
+static const QString UIDD_INFO_MAINNET = "<a href='https://uidd.info/%1/%2'>%2</a>";
+
+/* Testnet uidd explorer uri */
+static const QString UIDD_INFO_TESTNET = "<a href='https://testnet.uidd.info/%1/%2'>%2</a>";
 
 #endif // BITCOIN_QT_GUICONSTANTS_H

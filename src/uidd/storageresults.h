@@ -1,8 +1,11 @@
 #include <uint256.h>
 #include <primitives/transaction.h>
 #include <libethereum/State.h>
+#include <libethereum/Transaction.h>
+#include <leveldb/db.h>
+#include <util/system.h>
 
-using logEntriesSerializ = std::vector<std::pair<dev::Address, std::pair<dev::h256s, dev::bytes>>>;
+using logEntriesSerialize = std::vector<std::pair<dev::Address, std::pair<dev::h256s, dev::bytes>>>;
 
 struct TransactionReceiptInfo{
     uint256 blockHash;
@@ -15,6 +18,9 @@ struct TransactionReceiptInfo{
     uint64_t gasUsed;
     dev::Address contractAddress;
     dev::eth::LogEntries logs;
+    dev::eth::TransactionException excepted;
+    std::string exceptedMessage;
+    uint32_t outputIndex;
 };
 
 struct TransactionReceiptInfoSerialized{
@@ -27,7 +33,10 @@ struct TransactionReceiptInfoSerialized{
     std::vector<dev::u256> cumulativeGasUsed;
     std::vector<dev::u256> gasUsed;
     std::vector<dev::h160> contractAddresses;
-    std::vector<logEntriesSerializ> logs;
+    std::vector<logEntriesSerialize> logs;
+    std::vector<uint32_t> excepted;
+    std::vector<std::string> exceptedMessage;
+    std::vector<uint32_t> outputIndexes;
 };
 
 class StorageResults{
@@ -35,6 +44,7 @@ class StorageResults{
 public:
 
 	StorageResults(std::string const& _path);
+    ~StorageResults();
 
 	void addResult(dev::h256 hashTx, std::vector<TransactionReceiptInfo>& result);
 
@@ -44,17 +54,21 @@ public:
 
 	void commitResults();
 
+    void clearCacheResult();
+
     void wipeResults();
 
 private:
 
 	bool readResult(dev::h256 const& _key, std::vector<TransactionReceiptInfo>& _result);
 
-	logEntriesSerializ logEntriesSerialization(dev::eth::LogEntries const& _logs);
+	logEntriesSerialize logEntriesSerialization(dev::eth::LogEntries const& _logs);
 
-	dev::eth::LogEntries logEntriesDeserialize(logEntriesSerializ const& _logs);
+	dev::eth::LogEntries logEntriesDeserialize(logEntriesSerialize const& _logs);
 
 	std::string path;
+
+    leveldb::DB* db;
 
 	std::unordered_map<dev::h256, std::vector<TransactionReceiptInfo>> m_cache_result;
 };

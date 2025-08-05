@@ -1,7 +1,8 @@
 #include <sstream>
-#include <util.h>
+#include <util/system.h>
 #include <validation.h>
-#include "uiddstate.h"
+#include <chainparams.h>
+#include <uidd/uiddstate.h>
 
 using namespace std;
 using namespace dev;
@@ -43,6 +44,7 @@ ResultExecute UiddState::execute(EnvInfo const& _envInfo, SealEngineFace const& 
 
     CTransactionRef tx;
     u256 startGasUsed;
+    const Consensus::Params& consensusParams = Params().GetConsensus();
     try{
         if (_t.isCreation() && _t.value())
             BOOST_THROW_EXCEPTION(CreateWithValue());
@@ -52,6 +54,9 @@ ResultExecute UiddState::execute(EnvInfo const& _envInfo, SealEngineFace const& 
         startGasUsed = _envInfo.gasUsed();
         if (!e.execute()){
             e.go(onOp);
+            if(chainActive.Height() >= consensusParams.QIP7Height){
+            	validateTransfersWithChangeLog();
+            }
         } else {
             e.revert();
             throw Exception();
@@ -75,10 +80,10 @@ ResultExecute UiddState::execute(EnvInfo const& _envInfo, SealEngineFace const& 
             } else {
                 printfErrorLog(res.excepted);
             }
-            
+
             uidd::commit(cacheUTXO, stateUTXO, m_cache);
             cacheUTXO.clear();
-            bool removeEmptyAccounts = _envInfo.number() >= _sealEngine.chainParams().u256Param("EIP158ForkBlock");
+            bool removeEmptyAccounts = _envInfo.number() >= _sealEngine.chainParams().EIP158ForkBlock;
             commit(removeEmptyAccounts ? State::CommitBehaviour::RemoveEmptyAccounts : State::CommitBehaviour::KeepEmptyAccounts);
         }
     }
@@ -86,9 +91,12 @@ ResultExecute UiddState::execute(EnvInfo const& _envInfo, SealEngineFace const& 
         printfErrorLog(dev::eth::toTransactionException(_e));
         res.excepted = dev::eth::toTransactionException(_e);
         res.gasUsed = _t.gas();
-        if(_p != Permanence::Reverted){
+        if(chainActive.Height() < consensusParams.nFixUTXOCacheHFHeight  && _p != Permanence::Reverted){
             deleteAccounts(_sealEngine.deleteAddresses);
             commit(CommitBehaviour::RemoveEmptyAccounts);
+        } else {
+            m_cache.clear();
+            cacheUTXO.clear();
         }
     }
 
@@ -198,7 +206,7 @@ void UiddState::addBalance(dev::Address const& _id, dev::u256 const& _amount)
             // TODO: to save space we can combine this event with Balance by having
             //       Balance and Balance+Touch events.
         if (!a->isDirty() && a->isEmpty())
-            m_changeLog.emplace_back(dev::eth::detail::Change::Touch, _id);
+            m_changeLog.emplace_back(dev::eth::Change::Touch, _id);
 
             // Increase the account balance. This also is done for value 0 to mark
             // the account as dirty. Dirty account are not removed from the cache
@@ -215,24 +223,7 @@ void UiddState::addBalance(dev::Address const& _id, dev::u256 const& _amount)
     }
 
     if (_amount)
-        m_changeLog.emplace_back(dev::eth::detail::Change::Balance, _id, _amount);
-}
-
-dev::Address UiddState::createUiddAddress(dev::h256 hashTx, uint32_t voutNumber){
-    uint256 hashTXid(h256Touint(hashTx));
-	std::vector<unsigned char> txIdAndVout(hashTXid.begin(), hashTXid.end());
-	std::vector<unsigned char> voutNumberChrs;
-	if (voutNumberChrs.size() < sizeof(voutNumber))voutNumberChrs.resize(sizeof(voutNumber));
-	std::memcpy(voutNumberChrs.data(), &voutNumber, sizeof(voutNumber));
-	txIdAndVout.insert(txIdAndVout.end(),voutNumberChrs.begin(),voutNumberChrs.end());
-		
-	std::vector<unsigned char> SHA256TxVout(32);
-    CSHA256().Write(txIdAndVout.data(), txIdAndVout.size()).Finalize(SHA256TxVout.data());
-
-	std::vector<unsigned char> hashTxIdAndVout(20);
-    CRIPEMD160().Write(SHA256TxVout.data(), SHA256TxVout.size()).Finalize(hashTxIdAndVout.data());
-		
-	return dev::Address(hashTxIdAndVout);
+        m_changeLog.emplace_back(dev::eth::Change::Balance, _id, _amount);
 }
 
 void UiddState::deleteAccounts(std::set<dev::Address>& addrs){
@@ -249,6 +240,7 @@ void UiddState::deleteAccounts(std::set<dev::Address>& addrs){
 void UiddState::updateUTXO(const std::unordered_map<dev::Address, Vin>& vins){
     for(auto& v : vins){
         Vin* vi = const_cast<Vin*>(vin(v.first));
+
         if(vi){
             vi->hash = v.second.hash;
             vi->nVout = v.second.nVout;
@@ -263,9 +255,35 @@ void UiddState::updateUTXO(const std::unordered_map<dev::Address, Vin>& vins){
 void UiddState::printfErrorLog(const dev::eth::TransactionException er){
     std::stringstream ss;
     ss << er;
-    clog(ExecutiveWarnChannel) << "VM exception:" << ss.str();
+    clog(dev::VerbosityWarning, "exec") << "VM exception:" << ss.str();
 }
 
+void UiddState::validateTransfersWithChangeLog(){
+	ChangeLog tmpChangeLog = m_changeLog;
+	std::vector<TransferInfo> validatedTransfers;
+
+	for(const TransferInfo& ti : transfers){
+		for(std::size_t i=0; i<tmpChangeLog.size(); ++i){
+			//find the log entry for the receiver of the transfer
+			if(tmpChangeLog[i].kind==Change::Balance && tmpChangeLog[i].address==ti.to && tmpChangeLog[i].value==ti.value){
+				for(std::size_t j=0; j<tmpChangeLog.size(); ++j){
+					//find the log entry for the sender of the transfer
+					if(tmpChangeLog[j].kind==Change::Balance && tmpChangeLog[j].address==ti.from && tmpChangeLog[j].value==0-ti.value){
+						// transfer is valid
+						validatedTransfers.push_back(ti);
+						// zero out found elements to avoid matching again
+						tmpChangeLog[i].address=dev::Address(0);
+						tmpChangeLog[j].address=dev::Address(0);
+						break;
+					}
+				}
+				break;
+			}
+		}
+	}
+
+	transfers=validatedTransfers;
+}
 ///////////////////////////////////////////////////////////////////////////////////////////
 CTransaction CondensingTX::createCondensingTX(){
     selectionVin();

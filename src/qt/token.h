@@ -2,7 +2,7 @@
 #define TOKEN_H
 #include <string>
 #include <vector>
-#include "uint256.h"
+#include <uint256.h>
 
 struct TokenEvent{
     std::string address;
@@ -28,12 +28,15 @@ struct TokenEvent{
 };
 
 struct TokenData;
+class WalletModel;
 
 class Token
 {
 public:
     Token();
     ~Token();
+
+    void setModel(WalletModel *model);
 
     // Set command data
     void setAddress(const std::string &address);
@@ -46,6 +49,7 @@ public:
 
     // Get transaction data
     std::string getTxId();
+    std::string getErrorMessage();
 
     // ABI Functions
     bool name(std::string& result, bool sendTo = false);

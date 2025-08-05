@@ -5,6 +5,7 @@
 #include <crypto/sha256.h>
 #include <crypto/ripemd160.h>
 #include <uint256.h>
+#include <util/convert.h>
 #include <primitives/transaction.h>
 #include <uidd/uiddtransaction.h>
 
@@ -12,7 +13,7 @@
 #include <libethcore/SealEngine.h>
 
 using OnOpFunc = std::function<void(uint64_t, uint64_t, dev::eth::Instruction, dev::bigint, dev::bigint, 
-    dev::bigint, dev::eth::VM*, dev::eth::ExtVMFace const*)>;
+    dev::bigint, dev::eth::VMFace const*, dev::eth::ExtVMFace const*)>;
 using plusAndMinus = std::pair<dev::u256, dev::u256>;
 using valtype = std::vector<unsigned char>;
 
@@ -68,13 +69,32 @@ public:
 
     void setRootUTXO(dev::h256 const& _r) { cacheUTXO.clear(); stateUTXO.setRoot(_r); }
 
+    void setCacheUTXO(dev::Address const& address, Vin const& vin) { cacheUTXO.insert(std::make_pair(address, vin)); }
+
     dev::h256 rootHashUTXO() const { return stateUTXO.root(); }
 
     std::unordered_map<dev::Address, Vin> vins() const; // temp
 
     dev::OverlayDB const& dbUtxo() const { return dbUTXO; }
 
-	dev::OverlayDB& dbUtxo() { return dbUTXO; }
+    dev::OverlayDB& dbUtxo() { return dbUTXO; }
+
+    static const dev::Address createUiddAddress(dev::h256 hashTx, uint32_t voutNumber){
+        uint256 hashTXid(h256Touint(hashTx));
+        std::vector<unsigned char> txIdAndVout(hashTXid.begin(), hashTXid.end());
+        std::vector<unsigned char> voutNumberChrs;
+        if (voutNumberChrs.size() < sizeof(voutNumber))voutNumberChrs.resize(sizeof(voutNumber));
+        std::memcpy(voutNumberChrs.data(), &voutNumber, sizeof(voutNumber));
+        txIdAndVout.insert(txIdAndVout.end(),voutNumberChrs.begin(),voutNumberChrs.end());
+
+        std::vector<unsigned char> SHA256TxVout(32);
+        CSHA256().Write(txIdAndVout.data(), txIdAndVout.size()).Finalize(SHA256TxVout.data());
+
+        std::vector<unsigned char> hashTxIdAndVout(20);
+        CRIPEMD160().Write(SHA256TxVout.data(), SHA256TxVout.size()).Finalize(hashTxIdAndVout.data());
+
+        return dev::Address(hashTxIdAndVout);
+    }
 
     virtual ~UiddState(){}
 
@@ -94,8 +114,6 @@ private:
 
     void addBalance(dev::Address const& _id, dev::u256 const& _amount);
 
-    dev::Address createUiddAddress(dev::h256 hashTx, uint32_t voutNumber);
-
     void deleteAccounts(std::set<dev::Address>& addrs);
 
     void updateUTXO(const std::unordered_map<dev::Address, Vin>& vins);
@@ -111,6 +129,8 @@ private:
 	dev::eth::SecureTrieDB<dev::Address, dev::OverlayDB> stateUTXO;
 
 	std::unordered_map<dev::Address, Vin> cacheUTXO;
+
+	void validateTransfersWithChangeLog();
 };
 
 

@@ -1,14 +1,14 @@
 *.tar.gz
 
 *.exe
-src/uidd-cli
-src/uidd-tx
-src/uiddd
-src/bench/bench_uidd
-src/qt/uidd-qt
-src/qt/test/test_uidd-qt
-src/test/test_uidd
-src/test/test_uidd_fuzzy
+src/bitcoin
+src/bitcoind
+src/bitcoin-cli
+src/bitcoin-tx
+src/bitcoin-wallet
+src/test/test_bitcoin
+src/test/test_bitcoin_fuzzy
+src/qt/test/test_bitcoin-qt
 
 # autoreconf
 Makefile.in
@@ -45,7 +45,11 @@ src/qt/forms/ui_*.h
 
 src/qt/test/moc*.cpp
 
-Makefile.am.user
+src/qt/bitcoin-qt.config
+src/qt/bitcoin-qt.creator
+src/qt/bitcoin-qt.creator.user
+src/qt/bitcoin-qt.files
+src/qt/bitcoin-qt.includes
 
 .deps
 .dirstamp
@@ -62,6 +66,7 @@ Makefile.am.user
 *.a
 *.pb.cc
 *.pb.h
+*.dat
 
 *.log
 *.trs
@@ -79,11 +84,11 @@ Makefile.am.user
 Makefile
 bitcoin-qt
 Bitcoin-Qt.app
+background.tiff*
 
 # Unit-tests
 Makefile.test
 bitcoin-qt_test
-src/test/buildenv.py
 
 # Resources cpp
 qrc_*.cpp
@@ -104,8 +109,8 @@ coverage_percent.txt
 linux-coverage-build
 linux-build
 win32-build
-qa/pull-tester/tests_config.py
-qa/cache/*
+test/config.ini
+test/cache/*
 
 !src/leveldb*/Makefile
 
@@ -113,12 +118,23 @@ qa/cache/*
 
 libbitcoinconsensus.pc
 contrib/devtools/split-debug.sh
-#eclipse project files
+
+# Output from running db4 installation
+db4/
+
+# clang-check
+*.plist
+
 .cproject
 .project
 .settings/language.settings.xml
-
-#clion project files
-.idea/
-CMakeLists.txt
-cmake-build-debug/
+src/uidd-cli
+src/uidd-tx
+src/uiddd
+src/uidd-wallet
+src/bench/bench_uidd
+src/qt/uidd-qt
+src/qt/test/test_uidd-qt
+src/test/buildenv.py
+src/test/test_uidd
+src/test/test_uidd_fuzzy

@@ -1,21 +1,23 @@
 #ifndef RECEIVETOKENPAGE_H
 #define RECEIVETOKENPAGE_H
 
-#include <QWidget>
+#include <QDialog>
 
 namespace Ui {
 class ReceiveTokenPage;
 }
+class PlatformStyle;
 
-class ReceiveTokenPage : public QWidget
+class ReceiveTokenPage : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit ReceiveTokenPage(QWidget *parent = 0);
+    explicit ReceiveTokenPage(const PlatformStyle *platformStyle, QWidget *parent = 0);
     ~ReceiveTokenPage();
 
     void setAddress(QString address);
+    void setSymbol(QString symbol);
 
 private Q_SLOTS:
     void on_copyAddressClicked();
@@ -25,6 +27,8 @@ private:
     QString m_address;
 
     void createQRCode();
+
+    const PlatformStyle *platformStyle;
 };
 
 #endif // RECEIVETOKENPAGE_H

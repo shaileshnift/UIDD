@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=0.17.6
+Name=Uidd Core Testnet
+Comment=Connect to the Uidd P2P Network Testnet
+Exec=uidd-qt -testnet %u
+Terminal=false
+Type=Application
+Icon=uiddtestnet128
+MimeType=x-scheme-handler/uidd;
+Categories=Network;
+StartupWMClass=Uidd-qt-testnet
+Name[en_US]=uidd-qt-testnet

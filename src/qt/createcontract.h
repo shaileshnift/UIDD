@@ -33,13 +33,14 @@ public:
 Q_SIGNALS:
 
 public Q_SLOTS:
-    void on_clearAll_clicked();
-    void on_createContract_clicked();
-    void on_numBlocksChanged();
+    void on_clearAllClicked();
+    void on_createContractClicked();
+    void on_gasInfoChanged(quint64 blockGasLimit, quint64 minGasPrice, quint64 nGasPrice);
     void on_updateCreateButton();
     void on_newContractABI();
 
 private Q_SLOTS:
+    void updateDisplayUnit();
 
 private:
     QString toDataHex(int func, QString& errorMessage);
@@ -53,6 +54,7 @@ private:
     ABIFunctionField* m_ABIFunctionField;
     ContractABI* m_contractABI;
     TabBarInfo* m_tabInfo;
+    int m_results;
 };
 
 #endif // CREATECONTRACT_H

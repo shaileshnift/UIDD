@@ -1,19 +1,27 @@
-#include "sendtocontract.h"
-#include "ui_sendtocontract.h"
-#include "platformstyle.h"
-#include "walletmodel.h"
-#include "clientmodel.h"
-#include "guiconstants.h"
-#include "rpcconsole.h"
-#include "execrpccommand.h"
-#include "bitcoinunits.h"
-#include "optionsmodel.h"
-#include "validation.h"
-#include "utilmoneystr.h"
-#include "abifunctionfield.h"
-#include "contractabi.h"
-#include "tabbarinfo.h"
-#include "contractresult.h"
+#include <qt/sendtocontract.h>
+#include <qt/forms/ui_sendtocontract.h>
+#include <qt/platformstyle.h>
+#include <qt/walletmodel.h>
+#include <qt/clientmodel.h>
+#include <qt/guiconstants.h>
+#include <qt/rpcconsole.h>
+#include <qt/execrpccommand.h>
+#include <qt/bitcoinunits.h>
+#include <qt/optionsmodel.h>
+#include <validation.h>
+#include <util/moneystr.h>
+#include <qt/abifunctionfield.h>
+#include <qt/contractabi.h>
+#include <qt/tabbarinfo.h>
+#include <qt/contractresult.h>
+#include <qt/contractbookpage.h>
+#include <qt/editcontractinfodialog.h>
+#include <qt/contracttablemodel.h>
+#include <qt/styleSheet.h>
+#include <qt/guiutil.h>
+#include <qt/sendcoinsdialog.h>
+#include <QClipboard>
+#include <interfaces/node.h>
 
 namespace SendToContract_NS
 {
@@ -36,17 +44,27 @@ SendToContract::SendToContract(const PlatformStyle *platformStyle, QWidget *pare
     ui(new Ui::SendToContract),
     m_model(0),
     m_clientModel(0),
+    m_contractModel(0),
     m_execRPCCommand(0),
     m_ABIFunctionField(0),
     m_contractABI(0),
-    m_tabInfo(0)
+    m_tabInfo(0),
+    m_results(1)
 {
+    m_platformStyle = platformStyle;
+
     // Setup ui components
     Q_UNUSED(platformStyle);
     ui->setupUi(this);
-    ui->groupBoxOptional->setStyleSheet(STYLE_GROUPBOX);
-    ui->groupBoxFunction->setStyleSheet(STYLE_GROUPBOX);
-    ui->scrollAreaFunction->setStyleSheet(".QScrollArea {border: none;}");
+    ui->saveInfoButton->setIcon(platformStyle->MultiStatesIcon(":/icons/filesave", PlatformStyle::PushButtonIcon));
+    ui->loadInfoButton->setIcon(platformStyle->MultiStatesIcon(":/icons/address-book", PlatformStyle::PushButtonIcon));
+    ui->pasteAddressButton->setIcon(platformStyle->MultiStatesIcon(":/icons/editpaste", PlatformStyle::PushButtonIcon));
+    // Format tool buttons
+    GUIUtil::formatToolButtons(ui->saveInfoButton, ui->loadInfoButton, ui->pasteAddressButton);
+
+    // Set stylesheet
+    SetObjectStyleSheet(ui->pushButtonClearAll, StyleSheetNames::ButtonDark);
+
     m_ABIFunctionField = new ABIFunctionField(platformStyle, ABIFunctionField::SendTo, ui->scrollAreaFunction);
     ui->scrollAreaFunction->setWidget(m_ABIFunctionField);
     ui->lineEditAmount->setEnabled(true);
@@ -55,7 +73,7 @@ SendToContract::SendToContract(const PlatformStyle *platformStyle, QWidget *pare
     ui->labelSenderAddress->setToolTip(tr("The quantum address that will be used as sender."));
 
     m_tabInfo = new TabBarInfo(ui->stackedWidget);
-    m_tabInfo->addTab(0, tr("SendToContract"));
+    m_tabInfo->addTab(0, tr("Send To Contract"));
 
     // Set defaults
     ui->lineEditGasPrice->setValue(DEFAULT_GAS_PRICE);
@@ -65,6 +83,7 @@ SendToContract::SendToContract(const PlatformStyle *platformStyle, QWidget *pare
     ui->lineEditGasLimit->setValue(DEFAULT_GAS_LIMIT_OP_SEND);
     ui->textEditInterface->setIsValidManually(true);
     ui->pushButtonSendToContract->setEnabled(false);
+    ui->lineEditSenderAddress->setSenderAddress(true);
 
     // Create new PRC command line interface
     QStringList lstMandatory;
@@ -85,12 +104,16 @@ SendToContract::SendToContract(const PlatformStyle *platformStyle, QWidget *pare
     m_contractABI = new ContractABI();
 
     // Connect signals with slots
-    connect(ui->pushButtonClearAll, SIGNAL(clicked()), SLOT(on_clearAll_clicked()));
-    connect(ui->pushButtonSendToContract, SIGNAL(clicked()), SLOT(on_sendToContract_clicked()));
-    connect(ui->lineEditContractAddress, SIGNAL(textChanged(QString)), SLOT(on_updateSendToContractButton()));
-    connect(ui->textEditInterface, SIGNAL(textChanged()), SLOT(on_newContractABI()));
-    connect(ui->stackedWidget, SIGNAL(currentChanged(int)), SLOT(on_updateSendToContractButton()));
-    connect(m_ABIFunctionField, SIGNAL(functionChanged()), SLOT(on_functionChanged()));
+    connect(ui->pushButtonClearAll, &QPushButton::clicked, this, &SendToContract::on_clearAllClicked);
+    connect(ui->pushButtonSendToContract, &QPushButton::clicked, this, &SendToContract::on_sendToContractClicked);
+    connect(ui->lineEditContractAddress, &QValidatedLineEdit::textChanged, this, &SendToContract::on_updateSendToContractButton);
+    connect(ui->textEditInterface, &QValidatedTextEdit::textChanged, this, &SendToContract::on_newContractABI);
+    connect(ui->stackedWidget, &QStackedWidget::currentChanged, this, &SendToContract::on_updateSendToContractButton);
+    connect(m_ABIFunctionField, &ABIFunctionField::functionChanged, this, &SendToContract::on_functionChanged);
+    connect(ui->saveInfoButton, &QToolButton::clicked, this, &SendToContract::on_saveInfoClicked);
+    connect(ui->loadInfoButton, &QToolButton::clicked, this, &SendToContract::on_loadInfoClicked);
+    connect(ui->pasteAddressButton, &QToolButton::clicked, this, &SendToContract::on_pasteAddressClicked);
+    connect(ui->lineEditContractAddress, &QValidatedLineEdit::textChanged, this, &SendToContract::on_contractAddressChanged);
 
     // Set contract address validator
     QRegularExpression regEx;
@@ -109,6 +132,14 @@ SendToContract::~SendToContract()
 void SendToContract::setModel(WalletModel *_model)
 {
     m_model = _model;
+    m_contractModel = m_model->getContractTableModel();
+    ui->lineEditSenderAddress->setWalletModel(m_model);
+
+    if (m_model && m_model->getOptionsModel())
+        connect(m_model->getOptionsModel(), &OptionsModel::displayUnitChanged, this, &SendToContract::updateDisplayUnit);
+
+    // update the display unit, to not use the default ("UIDD")
+    updateDisplayUnit();
 }
 
 bool SendToContract::isValidContractAddress()
@@ -136,18 +167,23 @@ bool SendToContract::isDataValid()
     return dataValid;
 }
 
+void SendToContract::setContractAddress(const QString &address)
+{
+    ui->lineEditContractAddress->setText(address);
+    ui->lineEditContractAddress->setFocus();
+}
+
 void SendToContract::setClientModel(ClientModel *_clientModel)
 {
     m_clientModel = _clientModel;
 
     if (m_clientModel)
     {
-        connect(m_clientModel, SIGNAL(numBlocksChanged(int,QDateTime,double,bool)), this, SLOT(on_numBlocksChanged()));
-        on_numBlocksChanged();
+        connect(m_clientModel, SIGNAL(gasInfoChanged(quint64, quint64, quint64)), this, SLOT(on_gasInfoChanged(quint64, quint64, quint64)));
     }
 }
 
-void SendToContract::on_clearAll_clicked()
+void SendToContract::on_clearAllClicked()
 {
     ui->lineEditContractAddress->clear();
     ui->lineEditAmount->clear();
@@ -157,18 +193,10 @@ void SendToContract::on_clearAll_clicked()
     ui->lineEditSenderAddress->setCurrentIndex(-1);
     ui->textEditInterface->clear();
     ui->textEditInterface->setIsValidManually(true);
-
-    for(int i = ui->stackedWidget->count() - 1; i > 0; i--)
-    {
-        QWidget* widget = ui->stackedWidget->widget(i);
-        ui->stackedWidget->removeWidget(widget);
-        widget->deleteLater();
-        m_tabInfo->removeTab(i);
-    }
-    m_tabInfo->setCurrent(0);
+    m_tabInfo->clear();
 }
 
-void SendToContract::on_sendToContract_clicked()
+void SendToContract::on_sendToContractClicked()
 {
     if(isDataValid())
     {
@@ -183,7 +211,7 @@ void SendToContract::on_sendToContract_clicked()
         QVariant result;
         QString errorMessage;
         QString resultJson;
-        int unit = m_model->getOptionsModel()->getDisplayUnit();
+        int unit = BitcoinUnits::BTC;
         uint64_t gasLimit = ui->lineEditGasLimit->value();
         CAmount gasPrice = ui->lineEditGasPrice->value();
         int func = m_ABIFunctionField->getSelectedFunction();
@@ -205,40 +233,42 @@ void SendToContract::on_sendToContract_clicked()
         ExecRPCCommand::appendParam(lstParams, PARAM_GASPRICE, BitcoinUnits::format(unit, gasPrice, false, BitcoinUnits::separatorNever));
         ExecRPCCommand::appendParam(lstParams, PARAM_SENDER, ui->lineEditSenderAddress->currentText());
 
-        // Execute RPC command line
-        if(errorMessage.isEmpty() && m_execRPCCommand->exec(lstParams, result, resultJson, errorMessage))
-        {
-            ContractResult *widgetResult = new ContractResult(ui->stackedWidget);
-            widgetResult->setResultData(result, FunctionABI(), m_ABIFunctionField->getParamsValues(), ContractResult::SendToResult);
-            ui->stackedWidget->addWidget(widgetResult);
-            int position = ui->stackedWidget->count() - 1;
+        QString questionString = tr("Are you sure you want to send to the contract: <br /><br />");
+        questionString.append(tr("<b>%1</b>?")
+                              .arg(ui->lineEditContractAddress->text()));
 
-            m_tabInfo->addTab(position, tr("Result %1").arg(position));
-            m_tabInfo->setCurrent(position);
-        }
-        else
+        SendConfirmationDialog confirmationDialog(tr("Confirm sending to contract."), questionString, 3, this);
+        confirmationDialog.exec();
+        QMessageBox::StandardButton retval = (QMessageBox::StandardButton)confirmationDialog.result();
+        if(retval == QMessageBox::Yes)
         {
-            QMessageBox::warning(this, tr("Send to contract"), errorMessage);
+            // Execute RPC command line
+            if(errorMessage.isEmpty() && m_execRPCCommand->exec(m_model->node(), m_model, lstParams, result, resultJson, errorMessage))
+            {
+                ContractResult *widgetResult = new ContractResult(ui->stackedWidget);
+                widgetResult->setResultData(result, FunctionABI(), m_ABIFunctionField->getParamsValues(), ContractResult::SendToResult);
+                ui->stackedWidget->addWidget(widgetResult);
+                int position = ui->stackedWidget->count() - 1;
+                m_results = position == 1 ? 1 : m_results + 1;
+
+                m_tabInfo->addTab(position, tr("Result %1").arg(m_results));
+                m_tabInfo->setCurrent(position);
+            }
+            else
+            {
+                QMessageBox::warning(this, tr("Send to contract"), errorMessage);
+            }
         }
     }
 }
 
-void SendToContract::on_numBlocksChanged()
+void SendToContract::on_gasInfoChanged(quint64 blockGasLimit, quint64 minGasPrice, quint64 nGasPrice)
 {
-    if(m_clientModel)
-    {
-        uint64_t blockGasLimit = 0;
-        uint64_t minGasPrice = 0;
-        uint64_t nGasPrice = 0;
-        m_clientModel->getGasInfo(blockGasLimit, minGasPrice, nGasPrice);
-
-        ui->labelGasLimit->setToolTip(tr("Gas limit: Default = %1, Max = %2.").arg(DEFAULT_GAS_LIMIT_OP_SEND).arg(blockGasLimit));
-        ui->labelGasPrice->setToolTip(tr("Gas price: UIDD price per gas unit. Default = %1, Min = %2.").arg(QString::fromStdString(FormatMoney(DEFAULT_GAS_PRICE))).arg(QString::fromStdString(FormatMoney(minGasPrice))));
-        ui->lineEditGasPrice->setMinimum(minGasPrice);
-        ui->lineEditGasLimit->setMaximum(blockGasLimit);
-
-        ui->lineEditSenderAddress->on_refresh();
-    }
+    Q_UNUSED(nGasPrice);
+    ui->labelGasLimit->setToolTip(tr("Gas limit. Default = %1, Max = %2").arg(DEFAULT_GAS_LIMIT_OP_CREATE).arg(blockGasLimit));
+    ui->labelGasPrice->setToolTip(tr("Gas price: UIDD price per gas unit. Default = %1, Min = %2").arg(QString::fromStdString(FormatMoney(DEFAULT_GAS_PRICE))).arg(QString::fromStdString(FormatMoney(minGasPrice))));
+    ui->lineEditGasPrice->SetMinValue(minGasPrice);
+    ui->lineEditGasLimit->setMaximum(blockGasLimit);
 }
 
 void SendToContract::on_updateSendToContractButton()
@@ -278,6 +308,83 @@ void SendToContract::on_functionChanged()
     if(!payable)
     {
         ui->lineEditAmount->clear();
+    }
+}
+
+void SendToContract::on_saveInfoClicked()
+{
+    if(!m_contractModel)
+        return;
+
+    bool valid = true;
+
+    if(!isValidContractAddress())
+        valid = false;
+
+    if(!isValidInterfaceABI())
+        valid = false;
+
+    if(!valid)
+        return;
+
+    QString contractAddress = ui->lineEditContractAddress->text();
+    int row = m_contractModel->lookupAddress(contractAddress);
+    EditContractInfoDialog::Mode dlgMode = row > -1 ? EditContractInfoDialog::EditContractInfo : EditContractInfoDialog::NewContractInfo;
+    EditContractInfoDialog dlg(dlgMode, this);
+    dlg.setModel(m_contractModel);
+    if(dlgMode == EditContractInfoDialog::EditContractInfo)
+    {
+        dlg.loadRow(row);
+    }
+    dlg.setAddress(ui->lineEditContractAddress->text());
+    dlg.setABI(ui->textEditInterface->toPlainText());
+    if(dlg.exec())
+    {
+        ui->lineEditContractAddress->setText(dlg.getAddress());
+        ui->textEditInterface->setText(dlg.getABI());
+        on_contractAddressChanged();
+    }
+}
+
+void SendToContract::on_loadInfoClicked()
+{
+    ContractBookPage dlg(m_platformStyle, this);
+    dlg.setModel(m_model->getContractTableModel());
+    if(dlg.exec())
+    {
+        ui->lineEditContractAddress->setText(dlg.getAddressValue());
+        on_contractAddressChanged();
+    }
+}
+
+void SendToContract::on_pasteAddressClicked()
+{
+    setContractAddress(QApplication::clipboard()->text());
+}
+
+void SendToContract::on_contractAddressChanged()
+{
+    if(isValidContractAddress() && m_contractModel)
+    {
+        QString contractAddress = ui->lineEditContractAddress->text();
+        if(m_contractModel->lookupAddress(contractAddress) > -1)
+        {
+            QString contractAbi = m_contractModel->abiForAddress(contractAddress);
+            if(ui->textEditInterface->toPlainText() != contractAbi)
+            {
+                ui->textEditInterface->setText(m_contractModel->abiForAddress(contractAddress));
+            }
+        }
+    }
+}
+
+void SendToContract::updateDisplayUnit()
+{
+    if(m_model && m_model->getOptionsModel())
+    {
+        // Update sendAmount and gasPriceAmount with the current unit
+        ui->lineEditGasPrice->setDisplayUnit(m_model->getOptionsModel()->getDisplayUnit());
+        ui->lineEditAmount->setDisplayUnit(m_model->getOptionsModel()->getDisplayUnit());
     }
 }
 

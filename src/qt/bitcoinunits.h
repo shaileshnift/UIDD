@@ -1,14 +1,15 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2018 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef BITCOIN_QT_BITCOINUNITS_H
 #define BITCOIN_QT_BITCOINUNITS_H
 
-#include "amount.h"
+#include <amount.h>
 
 #include <QAbstractListModel>
 #include <QString>
+
 #include <boost/multiprecision/cpp_int.hpp>
 using namespace boost::multiprecision;
 
@@ -60,7 +61,8 @@ public:
     {
         BTC,
         mBTC,
-        uBTC
+        uBTC,
+        SAT
     };
 
     enum SeparatorStyle
@@ -78,8 +80,10 @@ public:
     static QList<Unit> availableUnits();
     //! Is unit ID valid?
     static bool valid(int unit);
+    //! Long name
+    static QString longName(int unit);
     //! Short name
-    static QString name(int unit);
+    static QString shortName(int unit);
     //! Longer description
     static QString description(int unit);
     //! Number of Satoshis (1e-8) per unit
@@ -104,6 +108,8 @@ public:
     static QString formatToken(int decimal_units, const int256_t& amount, bool plussign=false, SeparatorStyle separators=separatorStandard); //! Format token as string
     //! Format token as string (with unit)
     static QString formatTokenWithUnit(const QString unit, int decimals, const int256_t& amount, bool plussign=false, SeparatorStyle separators=separatorStandard);
+    //! Format integer number as string (with and without separator)
+    static QString formatInt(const int64_t& number, bool plussign=false, SeparatorStyle separators=separatorStandard);
     ///@}
 
     //! @name AbstractListModel implementation

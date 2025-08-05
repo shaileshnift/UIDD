@@ -1,5 +1,5 @@
-#include "qvalidatedtextedit.h"
-#include "guiconstants.h"
+#include <qt/qvalidatedtextedit.h>
+#include <qt/styleSheet.h>
 
 #include <QValidator>
 
@@ -10,7 +10,8 @@ QValidatedTextEdit::QValidatedTextEdit(QWidget *parent) :
     emptyIsValid(true),
     isValidManually(false)
 {
-    connect(this, SIGNAL(textChanged()), this, SLOT(markValid()));
+    connect(this, &QValidatedTextEdit::textChanged, this, &QValidatedTextEdit::markValid);
+    setStyleSheet("");
 }
 
 void QValidatedTextEdit::clear()
@@ -51,7 +52,7 @@ void QValidatedTextEdit::setValid(bool _valid)
     }
     else
     {
-        setStyleSheet(STYLE_INVALID_TEXTEDIT);
+        SetObjectStyleSheet(this, StyleSheetNames::Invalid);
     }
     this->valid = _valid;
 }
