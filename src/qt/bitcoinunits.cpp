@@ -1,10 +1,8 @@
-// Copyright (c) 2011-2018 The Bitcoin Core developers
+// Copyright (c) 2011-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <qt/bitcoinunits.h>
-
-#include <primitives/transaction.h>
 
 #include <QStringList>
 
@@ -324,7 +322,6 @@ QString BitcoinUnits::formatInt(const int64_t &nIn, bool fPlus, BitcoinUnits::Se
 
     return quotient_str;
 }
-
 
 QString BitcoinUnits::getAmountColumnTitle(int unit)
 {

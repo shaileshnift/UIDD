@@ -1,4 +1,4 @@
-// Copyright (c) 2015-2018 The Bitcoin Core developers
+// Copyright (c) 2015-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -46,6 +46,7 @@ void MakeSingleColorImage(QImage& img, const QColor& colorbase, double opacity =
         }
     }
 }
+
 QPixmap MakeSingleColorPixmap(QImage& img, const QColor& colorbase, double opacity = 1)
 {
     MakeSingleColorImage(img, colorbase, opacity);
@@ -94,15 +95,15 @@ PlatformStyle::PlatformStyle(const QString &_name, bool _imagesOnButtons, bool _
 
     // Determine icon highlighting color
     if (colorizeIcons) {
-        singleColor = GetStringStyleValue("platformstyle/single-color", "#008ac8");
+        singleColor = GetStringStyleValue("platformstyle/single-color", "#009f3f");
     }
     // Determine text color
-    textColor = GetStringStyleValue("platformstyle/text-color", "#e6f0f0");
+    textColor = GetStringStyleValue("platformstyle/text-color", "#e6f9f0");
     menuColor = GetColorStyleValue("platformstyle/menu-color", QColor(QApplication::palette().color(QPalette::WindowText)));
 
     // Determine table color
     tableColorNormal = GetStringStyleValue("platformstyle/table-color-normal", "#ffffff");
-    tableColorInput = GetStringStyleValue("platformstyle/table-color-input", "#2fa5df");
+    tableColorInput = GetStringStyleValue("platformstyle/table-color-input", "#2fd78f");
     tableColorInout = GetStringStyleValue("platformstyle/table-color-inout", "#40bb00");
     tableColorOutput = GetStringStyleValue("platformstyle/table-color-output", "#40bb00");
     tableColorError = GetStringStyleValue("platformstyle/table-color-error", "#d02e49");
@@ -110,7 +111,7 @@ PlatformStyle::PlatformStyle(const QString &_name, bool _imagesOnButtons, bool _
     // Determine multi states icon colors
     multiStatesIconColor1 = GetStringStyleValue("platformstyle/multi-states-icon-color1", "#ffffff");
     multiStatesIconColor2 = GetStringStyleValue("platformstyle/multi-states-icon-color2", "#2d2d2d");
-    multiStatesIconColor3 = GetStringStyleValue("platformstyle/multi-states-icon-color3", "#5a5a5d");
+    multiStatesIconColor3 = GetStringStyleValue("platformstyle/multi-states-icon-color3", "#5a5d5a");
 }
 
 QImage PlatformStyle::SingleColorImage(const QString& filename) const
@@ -132,11 +133,6 @@ QIcon PlatformStyle::SingleColorIcon(const QIcon& icon) const
     if (!colorizeIcons)
         return icon;
     return ColorizeIcon(icon, SingleColor());
-}
-
-QIcon PlatformStyle::TextColorIcon(const QString& filename) const
-{
-    return ColorizeIcon(filename, TextColor(), 0.6);
 }
 
 QIcon PlatformStyle::TextColorIcon(const QIcon& icon) const

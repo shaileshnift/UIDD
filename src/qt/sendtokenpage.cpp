@@ -18,7 +18,7 @@
 #include <qt/styleSheet.h>
 #include <interfaces/node.h>
 
-static const CAmount SINGLE_STEP = 0.00000001*COIN;
+static const CAmount SINGLE_STEP = 0.000001*COIN;
 
 struct SelectedToken{
     std::string address;
@@ -187,7 +187,7 @@ void SendTokenPage::on_confirmClicked()
         questionString.append(tr("<br />%3 <br />")
                               .arg(QString::fromStdString(toAddress)));
 
-        SendConfirmationDialog confirmationDialog(tr("Confirm send token."), questionString, 3, this);
+        SendConfirmationDialog confirmationDialog(tr("Confirm send token."), questionString, "", "", SEND_CONFIRM_DELAY, tr("Send"), this);
         confirmationDialog.exec();
         QMessageBox::StandardButton retval = (QMessageBox::StandardButton)confirmationDialog.result();
         if(retval == QMessageBox::Yes)

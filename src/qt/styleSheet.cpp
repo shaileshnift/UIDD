@@ -16,7 +16,7 @@
 
 static const QString STYLE_FORMAT = ":/styles/%1/%2";
 static const QString STYLE_CONFIG_FORMAT = ":/styles/%1/config";
-static const QColor LINK_COLOR = "#2d9ad0";
+static const QColor LINK_COLOR = "#2dd07e";
 
 class UiddStyle : public QProxyStyle
 {
@@ -178,7 +178,7 @@ QStringList StyleSheet::getSupportedThemes()
 
 QStringList StyleSheet::getSupportedThemesNames()
 {
-    return QStringList() << "Light blue theme" << "Dark blue theme" << "Dark theme";
+    return QStringList() << "Light green theme" << "Dark green theme" << "Dark theme";
 }
 
 

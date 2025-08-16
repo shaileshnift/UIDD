@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2018 The Bitcoin Core developers
+// Copyright (c) 2011-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -8,23 +8,24 @@
 
 #include <qt/splashscreen.h>
 
-#include <qt/networkstyle.h>
-
 #include <clientversion.h>
 #include <interfaces/handler.h>
 #include <interfaces/node.h>
 #include <interfaces/wallet.h>
+#include <qt/guiutil.h>
+#include <qt/networkstyle.h>
 #include <ui_interface.h>
 #include <util/system.h>
-#include <version.h>
+#include <util/translation.h>
 #include "styleSheet.h"
 #include <qt/platformstyle.h>
 
 #include <QApplication>
 #include <QCloseEvent>
-#include <QDesktopWidget>
 #include <QPainter>
+#include <QPainterPath>
 #include <QRadialGradient>
+#include <QScreen>
 
 
 SplashScreen::SplashScreen(interfaces::Node& node, Qt::WindowFlags f, const NetworkStyle *networkStyle) :
@@ -43,7 +44,7 @@ SplashScreen::SplashScreen(interfaces::Node& node, Qt::WindowFlags f, const Netw
     devicePixelRatio = static_cast<QGuiApplication*>(QCoreApplication::instance())->devicePixelRatio();
 
     // define text to place
-    QString titleText       = tr(PACKAGE_NAME);
+    QString titleText       = PACKAGE_NAME;
     QString versionText     = QString("%1").arg(QString::fromStdString(FormatFullVersion()));
     QString copyrightText   = QString::fromUtf8(CopyrightHolders(strprintf("\xc2\xA9 %u ", COPYRIGHT_YEAR)).c_str());
     QString titleAddText    = networkStyle->getTitleAddText();
@@ -64,7 +65,7 @@ SplashScreen::SplashScreen(interfaces::Node& node, Qt::WindowFlags f, const Netw
     QColor logo_frame_color = GetStringStyleValue("splashscreen/logo-frame-color", "#ffffff");
 
     QRect mainRect(QPoint(0,0), splashSize);
-    QColor background_color     = GetStringStyleValue("splashscreen/background-color", "#030509");
+    QColor background_color     = GetStringStyleValue("splashscreen/background-color", "#030903");
     pixPaint.fillRect(mainRect, background_color);
 
     // draw background
@@ -127,7 +128,7 @@ SplashScreen::SplashScreen(interfaces::Node& node, Qt::WindowFlags f, const Netw
     QRect r(QPoint(), QSize(pixmap.size().width()/devicePixelRatio,pixmap.size().height()/devicePixelRatio));
     resize(r.size());
     setFixedSize(r.size());
-    move(QApplication::desktop()->screenGeometry().center() - r.center());
+    move(QGuiApplication::primaryScreen()->geometry().center() - r.center());
 
     subscribeToCoreSignals();
     installEventFilter(this);
@@ -141,7 +142,7 @@ SplashScreen::~SplashScreen()
 bool SplashScreen::eventFilter(QObject * obj, QEvent * ev) {
     if (ev->type() == QEvent::KeyPress) {
         QKeyEvent *keyEvent = static_cast<QKeyEvent *>(ev);
-        if(keyEvent->text()[0] == 'q') {
+        if (keyEvent->key() == Qt::Key_Q) {
             m_node.startShutdown();
         }
     }
@@ -161,18 +162,19 @@ void SplashScreen::finish()
 static void InitMessage(SplashScreen *splash, const std::string &message)
 {
     QColor foreground_color = GetStringStyleValue("splashscreen/foreground-color_statusbar", "#ffffff");
-    QMetaObject::invokeMethod(splash, "showMessage",
+    bool invoked = QMetaObject::invokeMethod(splash, "showMessage",
         Qt::QueuedConnection,
         Q_ARG(QString, QString::fromStdString(message)),
         Q_ARG(int, Qt::AlignBottom|Qt::AlignLeft),
         Q_ARG(QColor, foreground_color));
+    assert(invoked);
 }
 
 static void ShowProgress(SplashScreen *splash, const std::string &title, int nProgress, bool resume_possible)
 {
     InitMessage(splash, title + std::string("\n") +
-            (resume_possible ? _("(press q to shutdown and continue later)")
-                                : _("press q to shutdown")) +
+            (resume_possible ? _("(press q to shutdown and continue later)").translated
+                                : _("press q to shutdown").translated) +
             strprintf("\n%d", nProgress) + "%");
 }
 #ifdef ENABLE_WALLET
