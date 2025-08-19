@@ -86,9 +86,9 @@ public:
         consensus.QIP6Height = 60000;
         consensus.QIP7Height = 60000;
         consensus.QIP9Height = 60000;
-        consensus.nOfflineStakeHeight = 234999;
-        consensus.nReduceBlocktimeHeight = 235999;
-        consensus.nMuirGlacierHeight = 235999;
+        consensus.nOfflineStakeHeight = 999999;
+        consensus.nReduceBlocktimeHeight = 999999;
+        consensus.nMuirGlacierHeight = 999999;
         consensus.powLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.QIP9PosLimit = uint256S("0000000000001fffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9
@@ -185,7 +185,7 @@ public:
         consensus.nFirstMPoSBlock = consensus.nLastPOWBlock + 
                                     consensus.nMPoSRewardRecipients + 
                                     consensus.nCoinbaseMaturity;
-        consensus.nLastMPoSBlock = 234998;
+        consensus.nLastMPoSBlock = 999998;
 
 
         consensus.nFixUTXOCacheHFHeight = 32000;
