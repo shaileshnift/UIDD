@@ -95,6 +95,12 @@ jobs:
     - name: Compile
       run: make -j$(nproc)
 
+    - name: Build Windows Installer
+      run: |
+        # Adjust the path to wherever your .nsi script is located.
+        # For Qt/blockchain projects, it is frequently in the share/ directory.
+        makensis share/setup.nsi.in
+    
     # - name: Run Tests (Optional)
     #   run: make check
 
@@ -107,3 +113,4 @@ jobs:
           src/uidd-cli.exe
           src/uidd-tx.exe
           src/qt/uidd-qt.exe
+          share/uidd-win-setup.exe
