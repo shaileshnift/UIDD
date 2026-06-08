@@ -573,7 +573,7 @@ QStatusBar QLabel::disabled{
 UnitDisplayStatusBarControl {
     color: #6fab80; 
     background: transparent;
-    border: 1px solid #3B4767;
+    border: 1px solid #3b6747;
     border-radius: 12px;
     font: 16px;
     padding: 0px;

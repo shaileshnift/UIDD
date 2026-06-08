@@ -40,7 +40,7 @@ QFrame#hLine,
 #hLine2,
 #hLine3,
 #hLine4{
-    border-top: 1px solid #404041;
+    border-top: 1px solid #404140;
 }
 QFrame#hContractLine,
 #hContractLine2{
@@ -48,7 +48,7 @@ QFrame#hContractLine,
 }
 QFrame#vLine,
 #vLine2{
-    border-left: 1px solid #404041;
+    border-left: 1px solid #404140;
 }
 WalletFrame{
     background-color: #272727;
@@ -667,7 +667,7 @@ QMenuBar::item {
     background-color: transparent;
     padding: 5px 6px;
     border-radius: 4px;
-    color: #696869;
+    color: #696968;
 }
 QMenuBar::item:selected {
     border: none;
@@ -694,7 +694,7 @@ QMenu::item:selected {
 }
 QMenu::separator{
     height: 1px;
-    background-color: #d2d1d2;
+    background-color: #d2d2d1;
 }
 QMenu::icon{
     margin-left: 15px;
@@ -785,7 +785,7 @@ QRadioButton:indicator:checked:disabled {
 Dialogs CSS
 --------------------------------------------*/
 QWidget#buttonsContainer {
-    background: #ebeef3;
+    background: #ebf3ee;
 }
 QWidget#buttonsContainerWhite,
 #buttonsContainerWhite_ {
@@ -942,8 +942,8 @@ QCalendarWidget QAbstractItemView:disabled {
 Modal Overlay CSS
 --------------------------------------------*/
 #ModalOverlay QProgressBar {
-    background-color: #e3e2e3;
-    border: 1px solid #e3e2e3;
+    background-color: #e3e3e2;
+    border: 1px solid #e3e3e2;
     font: 1pt;
     color: transparent;
     border-radius: 0px;
@@ -1023,7 +1023,7 @@ Stake Page Widget CSS
     color: white;
 }
 #frameStakeInfo #hLine{
-    border-top: 1px solid #404041;
+    border-top: 1px solid #404140;
 }
 /*--------------------------------------------
 Overview Page Widget CSS
@@ -1034,7 +1034,7 @@ Overview Page Widget CSS
 #widgetWatchPending #vLine_4,
 #widgetWatchImmature #vLine_5,
 #widgetWatchStake #vLine_6{
-    border-left: 1px solid #404041;
+    border-left: 1px solid #404140;
 }
 #widgetStatus #labelLogo{
     width: 32px;
@@ -1171,5 +1171,5 @@ Delegate and Staker Page Widget CSS
     font: 13pt;
 }
 #vLineAssets{
-    border-left: 1px solid #404041;
+    border-left: 1px solid #404140;
 }

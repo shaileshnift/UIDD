@@ -64,7 +64,7 @@ SplashScreen::SplashScreen(interfaces::Node& node, Qt::WindowFlags f, const Netw
     QColor logo_frame_color = GetStringStyleValue("splashscreen/logo-frame-color", "#ffffff");
 
     QRect mainRect(QPoint(0,0), splashSize);
-    QColor background_color     = GetStringStyleValue("splashscreen/background-color", "#030509");
+    QColor background_color     = GetStringStyleValue("splashscreen/background-color", "#030905");
     pixPaint.fillRect(mainRect, background_color);
 
     // draw background
