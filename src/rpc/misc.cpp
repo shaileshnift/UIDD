@@ -77,7 +77,7 @@ static UniValue validateaddress(const JSONRPCRequest& request)
     return ret;
 }
 
-#ifdef ENABLE_BITCORE_RPC
+
 /////////////////////////////////////////////////////////////////////// // uidd
 UniValue getdgpinfo(const JSONRPCRequest& request)
 {
@@ -111,7 +111,7 @@ UniValue getdgpinfo(const JSONRPCRequest& request)
 
     return obj;
 }
-
+#ifdef ENABLE_BITCORE_RPC
 bool getAddressesFromParams(const UniValue& params, std::vector<std::pair<uint256, int> > &addresses)
 {
     if (params[0].isStr()) {
@@ -1286,9 +1286,10 @@ static const CRPCCommand commands[] =
     { "hidden",             "echo",                   &echo,                   {"arg0","arg1","arg2","arg3","arg4","arg5","arg6","arg7","arg8","arg9"}},
     { "hidden",             "echojson",               &echo,                   {"arg0","arg1","arg2","arg3","arg4","arg5","arg6","arg7","arg8","arg9"}},
 
-#ifdef ENABLE_BITCORE_RPC
+
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////// // uidd
     { "control",            "getdgpinfo",             &getdgpinfo,             {} },
+    #ifdef ENABLE_BITCORE_RPC
     { "util",               "getaddresstxids",        &getaddresstxids,        {"addresses"} },
     { "util",               "getaddressdeltas",       &getaddressdeltas,       {"addresses"} },
     { "util",               "getaddressbalance",      &getaddressbalance,      {"addresses"} },
