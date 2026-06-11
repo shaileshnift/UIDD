@@ -125,7 +125,7 @@ jobs:
         mkdir -p "$STAGING_DIR"
         
         # Copy compiled binaries (ignoring errors if a specific binary wasn't compiled)
-        cp src/dogexd src/dogex-cli src/dogex-tx src/qt/dogex-qt "$STAGING_DIR/" 2>/dev/null || :
+        cp src/uiddd src/uidd-cli src/uidd-tx src/qt/uidd-qt "$STAGING_DIR/" 2>/dev/null || :
         
         # Compress into tar.gz
         tar -czvf "${STAGING_DIR}.tar.gz" "$STAGING_DIR"
